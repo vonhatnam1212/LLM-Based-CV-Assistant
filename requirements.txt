@@ -37,3 +37,5 @@ wikipedia==1.4.0
 comtypes==1.4.2
 aspose-words==24.5.0
 llama-index-postprocessor-cohere-rerank==0.1.6
+llama-index-vector-stores-pinecone==0.1.7
+arize-phoenix[evals]

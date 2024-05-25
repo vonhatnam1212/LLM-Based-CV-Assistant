@@ -1,7 +1,6 @@
 import os
 import openai
 import sys
-import logging
 
 sys.path.append("../api")
 from config import PINECONE_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY, COHERE_API_KEY
@@ -13,8 +12,6 @@ os.environ["COHERE_API_KEY"] = COHERE_API_KEY
 from pinecone import Pinecone
 
 # langchain
-logging.basicConfig()
-logging.getLogger("langchain.retrievers.re_phraser").setLevel(logging.INFO)
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -57,7 +54,7 @@ Settings.chunk_size = 512
 
 def save_index_vectordb():
     origin_documents = get_documents(
-        "/home/namvn/workspace/LLMs/VPbank_hackathon/LLM-Based-CV-Assistant/data/extract_CV.jsonl"
+        "/home/nam/workspace/LLMs/LLM-Based-CV-Assistant/data/extract_CV.jsonl"
     )
     from llama_index.core import Document
 
@@ -83,7 +80,7 @@ def save_index_vectordb():
 
 
 def load_index_vectordb():
-    vector_store = PineconeVectorStore(pinecone_index=pinecone_index, namespace="text")
+    vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
     index = VectorStoreIndex.from_vector_store(
         vector_store=vector_store, show_progress=True, embed_model=embed_model
     )
@@ -92,19 +89,23 @@ def load_index_vectordb():
 
 
 def get_query_engine():
-    cohere_rerank = CohereRerank(top_n=5)
+    try:
+        cohere_rerank = CohereRerank(top_n=5)
 
-    index = load_index_vectordb()
-    # configure retriever
-    retriever = VectorIndexRetriever(
-        index,
-        verbose=True,
-        similarity_top_k=5,
-    )
+        index = load_index_vectordb()
+        # configure retriever
+        retriever = VectorIndexRetriever(
+            index,
+            verbose=True,
+            similarity_top_k=5,
+        )
 
-    # assemble query engine
-    query_engine = RetrieverQueryEngine(
-        retriever=retriever,
-        node_postprocessors=[cohere_rerank],
-    )
+        # assemble query engine
+        query_engine = RetrieverQueryEngine(
+            retriever=retriever,
+            node_postprocessors=[cohere_rerank],
+        )
+        print("query engine successful")
+    except:
+        print("error query engine")
     return query_engine

@@ -1,7 +1,6 @@
 import os
 import openai
 import sys
-import logging
 
 sys.path.append("../api")
 from config import PINECONE_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY, COHERE_API_KEY
@@ -17,8 +16,6 @@ from prompt import templates, ovewview_template
 from pinecone import Pinecone
 
 # langchain
-logging.basicConfig()
-logging.getLogger("langchain.retrievers.re_phraser").setLevel(logging.INFO)
 from langchain.chains import LLMChain
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import SequentialChain
