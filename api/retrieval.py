@@ -14,11 +14,10 @@ from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.pinecone import PineconeVectorStore
 from llama_index.core import StorageContext
 from llama_index.core import StorageContext
-from feature_pipeline.get_documents import get_documents
+from feature_pipeline.get_documents import get_extract_documents
 from model import (
     llamaindex_cohere_rerank,
     llamaindex_embed_model,
-    llamaindex_llm,
     pinecone_index,
 )
 
@@ -26,7 +25,7 @@ Settings.chunk_size = 512
 
 
 def save_index_vectordb():
-    origin_documents = get_documents(FILE_PATH)
+    origin_documents = get_extract_documents(FILE_PATH)
     from llama_index.core import Document
 
     documents = []
