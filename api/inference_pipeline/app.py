@@ -1,9 +1,6 @@
 from flask import Flask
 from flask_restful import reqparse
 from flask_restful import Api, Resource
-import time
-
-from werkzeug.exceptions import NotFound
 
 from query_CV import user_query
 
@@ -28,6 +25,9 @@ class GetData(Resource):
         query_args = reqparse.RequestParser()
         query_args.add_argument(
             "user_input", type=str, required=True, help="user input missing"
+        )
+        query_args.add_argument(
+            "model", type=str, required=True, help="model missing"
         )
         self.query_args = query_args
 

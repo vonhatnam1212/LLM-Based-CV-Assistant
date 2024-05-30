@@ -1,34 +1,14 @@
-import os
-import openai
-import sys
-
-sys.path.append("../api")
-from config import PINECONE_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY, COHERE_API_KEY
-
-os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-os.environ["COHERE_API_KEY"] = COHERE_API_KEY
-import phoenix as px
 from prompt import templates, ovewview_template
 
-# embedding
-from pinecone import Pinecone
 
 # langchain
 from langchain.chains import LLMChain
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import SequentialChain
-from langchain.chat_models import ChatOpenAI
 
 import json
 from llama_index.core import SimpleDirectoryReader
-
-pinecoin = Pinecone(api_key=PINECONE_API_KEY)
-
-pinecone_index = pinecoin.Index("resume-assistant")
-
-llm = ChatOpenAI(temperature=0.9, model="gpt-3.5-turbo-0125")
+from model import langchain_llm
 
 
 def get_origin_documents(file_path):
@@ -53,7 +33,7 @@ def get_list_chains(list_templates):
         )
         list_chains.append(
             LLMChain(
-                llm=llm,
+                llm=langchain_llm,
                 prompt=prompt,
                 output_key=template_name,
                 verbose=True,
@@ -63,7 +43,7 @@ def get_list_chains(list_templates):
 
 
 # viết 1 đoạn summary CV
-def write_overview_CV(document, templates, llm, ovewview_template):
+def write_overview_CV(document, templates, langchain_llm, ovewview_template):
     list_chain = get_list_chains(templates)
 
     # summary CV
@@ -80,7 +60,7 @@ def write_overview_CV(document, templates, llm, ovewview_template):
     )
     list_chain.append(
         LLMChain(
-            llm=llm,
+            llm=langchain_llm,
             prompt=overview_prompt,
             output_key="overview_CV",
             verbose=True,
@@ -103,5 +83,5 @@ def extract_documents(file_path):
     documents = get_origin_documents(file_path)
     all_documents = []
     for doc in documents:
-        all_documents.append(write_overview_CV(doc, templates, llm, ovewview_template))
+        all_documents.append(write_overview_CV(doc, templates, langchain_llm, ovewview_template))
     return all_documents

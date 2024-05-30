@@ -1,61 +1,32 @@
-import os
-import openai
 import sys
 
 sys.path.append("../api")
-from config import PINECONE_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY, COHERE_API_KEY
-
-os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-os.environ["COHERE_API_KEY"] = COHERE_API_KEY
-from pinecone import Pinecone
-
-# langchain
-from langchain_community.document_loaders import DirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import OpenAI
-from langchain.chains.question_answering import load_qa_chain
-from langchain_core.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.prompts import ChatPromptTemplate
-from langchain.chains import SequentialChain
-from langchain.chat_models import ChatOpenAI
-from langchain.retrievers import RePhraseQueryRetriever
-
-# llamaindex
-from llama_index.core import SimpleDirectoryReader
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.schema import IndexNode
-from llama_index.core.extractors import (
-    SummaryExtractor,
-    QuestionsAnsweredExtractor,
+from config import (
+    FILE_PATH,
 )
+
+
+# llama index
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
-from llama_index.llms.gemini import Gemini
 from llama_index.core import Settings
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core import VectorStoreIndex, get_response_synthesizer
+from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.pinecone import PineconeVectorStore
 from llama_index.core import StorageContext
-from llama_index.postprocessor.cohere_rerank import CohereRerank
 from llama_index.core import StorageContext
-from get_documents import get_documents
+from feature_pipeline.get_documents import get_documents
+from model import (
+    llamaindex_cohere_rerank,
+    llamaindex_embed_model,
+    llamaindex_llm,
+    pinecone_index,
+)
 
-pinecoin = Pinecone(api_key=PINECONE_API_KEY)
-pinecone_index = pinecoin.Index("resume-assistant")
-llm = Gemini(model_name="models/gemini-pro")
-# define embedding function
-embed_model = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-large-instruct")
 Settings.chunk_size = 512
 
 
 def save_index_vectordb():
-    origin_documents = get_documents(
-        "/home/nam/workspace/LLMs/LLM-Based-CV-Assistant/data/extract_CV.jsonl"
-    )
+    origin_documents = get_documents(FILE_PATH)
     from llama_index.core import Document
 
     documents = []
@@ -74,7 +45,7 @@ def save_index_vectordb():
         documents,
         storage_context=storage_context,
         show_progress=True,
-        embed_model=embed_model,
+        embed_model=llamaindex_embed_model,
     )
     return index
 
@@ -82,7 +53,9 @@ def save_index_vectordb():
 def load_index_vectordb():
     vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
     index = VectorStoreIndex.from_vector_store(
-        vector_store=vector_store, show_progress=True, embed_model=embed_model
+        vector_store=vector_store,
+        show_progress=True,
+        embed_model=llamaindex_embed_model,
     )
 
     return index
@@ -90,7 +63,6 @@ def load_index_vectordb():
 
 def get_query_engine():
     try:
-        cohere_rerank = CohereRerank(top_n=5)
 
         index = load_index_vectordb()
         # configure retriever
@@ -103,7 +75,7 @@ def get_query_engine():
         # assemble query engine
         query_engine = RetrieverQueryEngine(
             retriever=retriever,
-            node_postprocessors=[cohere_rerank],
+            node_postprocessors=[llamaindex_cohere_rerank],
         )
         print("query engine successful")
     except:
