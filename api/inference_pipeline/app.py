@@ -35,16 +35,16 @@ class GetData(Resource):
 class TransformData(GetData):
     def post(self):
         args = self.query_args.parse_args()
-        
         try:
-            query, token, file_name_document = user_query(args["user_input"])
-            print(query,token)
+            print(args)
+            query, total_tokens, total_cost, file_name_document = user_query(args["user_input"],args["model"])
+            print(query,total_tokens, total_cost)
             result = {
                 "code": 200,
                 "message": "success",
                 "result": query["result"],
-                "cost": token.total_cost,
-                "token": token.total_tokens,
+                "cost": total_cost,
+                "token": total_tokens,
                 "list_docs": file_name_document,
             }
         except:
@@ -58,4 +58,4 @@ class TransformData(GetData):
 app = create_app()
 
 if __name__ == "__main__":
-    create_app().run()
+    create_app().run(debug=True)
